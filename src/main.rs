@@ -1,6 +1,6 @@
 use arboard::{Clipboard};
 use clap::Parser;
-use std::fs;
+use std::{fs, path::Path};
 use tabled::{Table, Tabled, settings::{Style}};
 
 #[derive(Tabled)]
@@ -11,13 +11,13 @@ struct BoardTable {
 
 struct Board {
     clipboard : Clipboard,
-    file : String,
+    file : Box<str>,
     content : Vec<String>,
 }
 
 impl Board {
     pub fn new() -> Self {
-        let mut instance = Self { clipboard : Clipboard::new().unwrap(), file: "clips.json".to_string(), content: Vec::new() };
+        let mut instance = Self { clipboard : Clipboard::new().unwrap(), file: "clips.json".into(), content: Vec::new() };
         instance.load_from_file();
         instance
     }
@@ -60,15 +60,15 @@ impl Board {
     }
 
     pub fn load_from_file(&mut self) {
-        if !fs::exists(&self.file).unwrap_or(false) { return };
-        let json_content = fs::read_to_string(&self.file).unwrap();
+        if !fs::exists(&*self.file).unwrap_or(false) { return };
+        let json_content = fs::read_to_string(&*self.file).unwrap();
         let json_content = serde_json::from_str::<Vec<String>>(&json_content).unwrap();
         self.content = json_content;
     }
 
     pub fn save_to_file(&self) {
         let clipboard_content = serde_json::to_string(&self.content).unwrap();
-        fs::write(&self.file, clipboard_content);
+        fs::write(&*self.file, clipboard_content);
     }
 
 }
